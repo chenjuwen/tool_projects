@@ -1,0 +1,181 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<HEAD>
+<TITLE>TreeGrid-3.0</TITLE>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META NAME="Generator" CONTENT="EditPlus">
+<script type="text/javascript" src="json2.js"></script>
+<script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+<link type="text/css" rel="stylesheet" href="TreeGrid-3.0.css"/>
+<script type="text/javascript" src="TreeGrid-3.0.js"></script>
+</HEAD>
+
+<BODY>
+	<input type="button" value="展开/折叠 所有节点" onclick="expandAll()">
+	<input type="button" value="取得选中的checkbox" onclick="getSelectedCheckboxValues()">
+	<input type="button" value="取得当前行的数据" onclick="getSelected()">
+
+	<input type="button" value="显示数据池中的所有数据" onclick="showPoolData()">
+	<input type="button" value="刷新" onclick="refresh()">
+	<input type="button" value="打印" onclick="print()">
+	<input type="button" value="更新数据" onclick="updateData()">
+
+	<br><br>
+	
+	当前选中的行：<textarea id="currentRow" rows="4" cols="100"></textarea>
+
+	<br><br><div id="div1" style="width:800px;height:400px;overflow:auto;border:1px solid #aaa;padding:3px;"></div>
+	<div id="div2"></div><br>
+
+	<script language="javascript">
+		var is_expand = false;
+
+		var config = {
+			"width": "750px",
+			"rowClickEvent": "rowClickEvent",
+			"showCheckbox": true,
+			"chkValueField": "name",
+			"chkCascadeSelectParent": true,
+			"chkCascadeSelectChildren": true,
+			"columns":[
+				{"headerText": "名称", "dataField": "name"},
+				{"headerText": "拼音码", "dataField": "code", "dataAlign": "center", "width": "100"},
+				{"headerText": "负责人", "dataField": "assignee", "dataAlign": "center", "width": "100"},
+				{"headerText": "查看", "dataAlign": "center", "width": "120", "handler": "customLook"}
+			],
+			"dataset":[
+				{"name": "城区分公司", "code": "CQ", "assignee": "cjm", "children":[
+					{"name": "城区卡品分销中心"},
+					{"name": "先锋服务厅", "children":[
+						{"name": "chlid1"},
+						{"name": "chlid2"},
+						{"name": "chlid3", "children": [
+							{"name": "chlid3-1"},
+							{"name": "chlid3-2"},
+							{"name": "chlid3-3"},
+							{"name": "chlid3-4"}
+						]}
+					]},
+					{"name": "半环服务厅"}
+				]},
+				{"name": "清新分公司", "code": "QX", "assignee": "", "children":[]},
+				{"name": "英德分公司", "code": "YD", "assignee": "", "children":[]},
+				{"name": "佛冈分公司", "code": "FG", "assignee": "", "children":[]}
+			]
+		};
+
+		var treeGrid = jQuery("#div1").showTreeGrid(config);
+
+		/*
+			单击数据行后触发该事件
+			id：行的id
+			index：行的索引。
+			data：json格式的行数据对象。
+		*/
+		function rowClickEvent(id, index, data){
+			jQuery("#currentRow").val(id + ", " + index + ", " + JSON.stringify(data));
+		}
+
+		function customLook(trid, ptrid, row, col){
+			return "<a href='javascript:void(0);' style='color:blue;'>查看</a>&nbsp;&nbsp;<a href='javascript:void(0);' style='color:blue;'>编辑</a>&nbsp;&nbsp;<a href='javascript:alert(0);' style='color:blue;'>删除</a>";
+		}
+		
+		//展开/折叠 所有节点
+		function expandAll(){
+			if(is_expand){
+				treeGrid.collapseAll();
+				is_expand = false;
+			}else{
+				treeGrid.expandAll();
+				is_expand = true;
+			}
+		}
+
+		//折叠所有节点
+		function collapseAll(){
+			
+		}
+
+		function refresh(){
+			treeGrid.refresh();
+		}
+		
+		/*
+			取得当前选中的行，方法返回TreeGridItem对象
+		*/
+		function getSelected(){
+			var treeGridItem = treeGrid.getSelected();
+			if(treeGridItem != null){
+				var val = "";
+
+				//获取数据行属性值
+				//alert(treeGridItem.id + ", " + treeGridItem.index + ", " + treeGridItem.data.name);
+				
+				//获取父数据行
+				var parent = treeGridItem.getParent();
+				if(parent != null){
+					val += parent.data.name;
+				}
+
+				//获取当前数据
+				val += "\n" + treeGridItem.data.name;
+				
+				//获取子数据行集
+				var children = treeGridItem.getChildren();
+				if(children != null && children.length > 0){
+					for(var i=0; i<children.length; i++){
+						val += "\n" + children[i].data.name;
+					}
+				}
+				
+				jQuery("#currentRow").val(val);
+			}
+		}
+
+		function getSelectedCheckboxValues(){
+			jQuery("#currentRow").val("values: " + treeGrid.getSelectedCheckboxValues());
+		}
+
+		function showPoolData(){
+			jQuery("#textarea1").val(jQuery("#div1").html() + "\n\n" + JSON.stringify(treeGrid.getDataPool()));
+		}
+
+		/*
+		var arr = new Array();
+		for(var i=0; i<5; i++){
+			var a = new Array();
+			for(var j=0; j<5; j++){
+				a.push(i*j);
+			}
+			arr.push(a.join(","));
+		}
+
+		alert(arr.join("; "));
+		*/
+
+		function print(){
+			var oWin=window.open("","_blank");
+			oWin.document.write(jQuery("#div1").html());
+			oWin.focus();
+			oWin.document.close(); 
+			oWin.print(); 
+			oWin.close(); 
+		}
+
+		function updateData(){
+			var ds = [
+				{"name": "城区分公司", "code": "CQ", "assignee": "", "children":[]},
+				{"name": "清新分公司", "code": "QX", "assignee": "", "children":[]},
+				{"name": "英德分公司", "code": "YD", "assignee": "", "children":[]},
+				{"name": "佛冈分公司", "code": "FG", "assignee": "", "children":[]}
+			];
+
+			treeGrid.setDataset(ds);
+			treeGrid.refresh();
+		}
+	</script>
+
+
+	<br><br><textarea id="textarea1" rows="20" cols="120"></textarea>
+
+</BODY>
+</HTML>

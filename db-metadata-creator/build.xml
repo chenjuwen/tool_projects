@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="delploy" default="main" basedir=".">
+    <target name="init">                
+        <property environment="env"/>
+	    <property name="lib.dir" value="lib"/>
+	    <property name="src.dir" value="src"/>
+	    <property name="bin.dir" value="bin"/>
+	    <property name="desc.dir" value="desc"/>
+    </target>
+
+	<target name="clean" depends="init">
+		<delete dir="${bin.dir}"/>
+		<delete dir="${desc.dir}"/>
+		<mkdir dir="${bin.dir}"/>
+		<mkdir dir="${desc.dir}"/>
+	</target>
+
+    <target name="classpath">		        
+        <path id="local.class.path">
+            <fileset dir="${lib.dir}" includes="*.jar"/>
+        </path>
+    </target>
+    
+    <target name="compile" depends="clean,classpath">
+		<echo>compile...</echo>
+    	<javac debug="on" deprecation="on" destdir="${bin.dir}" fork="yes" source="1.7" target="1.7" memoryMaximumSize="512m" encoding="utf-8">
+            <classpath>
+                <path refid="local.class.path"/>                
+            </classpath>
+            <src path="${src.dir}"/>
+        </javac>
+    </target>
+	
+	<target name="jar" depends="compile">
+		<echo>jar...</echo>
+
+		<pathconvert property="mf.classpath" pathsep=" ">
+            <path>
+                <fileset dir="${lib.dir}">
+                    <include name="*.jar"/>
+                </fileset>
+            </path>
+            <mapper>
+				<chainedmapper>
+					<flattenmapper />
+					<globmapper from="*" to="lib/*" />
+				</chainedmapper>
+			</mapper>
+        </pathconvert>
+
+		<jar destfile="${desc.dir}/db-metadata-creator.jar">
+			<fileset dir="${bin.dir}">
+				<include name="**/*.class"/>
+			</fileset>
+			<manifest>
+				<attribute name="Main-Class" value="com.cjm.databasemetadata.MysqlMetadataCreator"/> 
+				<attribute name="Class-Path" value=". ${mf.classpath}"/>
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="zip" depends="jar">
+		<echo>zip...</echo>
+        <copy todir="${desc.dir}/lib">
+            <fileset dir="${lib.dir}">
+            	<exclude name="**/.svn/**"/>
+            	<exclude name="**/.git/**"/>
+			</fileset>
+        </copy>
+		<copy todir="${desc.dir}/doc">
+            <fileset dir="doc">
+            	<exclude name="**/.svn/**"/>
+            	<exclude name="**/.git/**"/>
+			</fileset>
+        </copy>
+        <copy todir="${desc.dir}">
+            <fileset dir="./">
+            	<include name="run.bat"/>
+            	<include name="config.properties"/>
+			</fileset>
+        </copy>
+
+		<zip basedir="${desc.dir}" destfile="db-metadata-creator.zip"/>
+		<echo>finish!</echo>
+	</target>
+
+	<target name="main" depends="zip"/>
+
+</project>
